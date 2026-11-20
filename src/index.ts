@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import { toNodeHandler } from "better-auth/node";
 import { connectDB } from "./config/db.js";
 import { auth } from "./lib/auth.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/equipment", equipmentRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 app.get("/", (req, res) => {
   res.send("Equipment Rental Platform API is running!");
