@@ -1,8 +1,7 @@
 
 import dotenv from "dotenv";
-import { MongoClient, Db } from "mongodb";
+import { MongoClient } from "mongodb";
 
-// Load environment variables
 dotenv.config();
 
 const uri = process.env.MONGODB_URI;
@@ -12,15 +11,16 @@ if (!uri || !dbName) {
   throw new Error("MongoDB environment variables are missing!");
 }
 
-const client = new MongoClient(uri);
+export const client = new MongoClient(uri, {
+  serverSelectionTimeoutMS: 10000,
+});
 
-let db: Db;
+export const db = client.db(dbName);
 
-export const connectDB = async (): Promise<Db> => {
+export const connectDB = async () => {
   try {
     await client.connect();
-
-    db = client.db(dbName);
+    await db.command({ ping: 1 });
 
     console.log("MongoDB connected successfully!");
 
