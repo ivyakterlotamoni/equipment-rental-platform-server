@@ -1,5 +1,7 @@
 
 import express from "express";
+import equipmentRoutes from "./routes/equipmentRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import cors from "cors";
 import dotenv from "dotenv";
 import { toNodeHandler } from "better-auth/node";
@@ -22,6 +24,8 @@ app.use(
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
 app.use(express.json());
+app.use("/api/users", userRoutes);
+app.use("/api/equipment", equipmentRoutes);
 
 app.get("/", (req, res) => {
   res.send("Equipment Rental Platform API is running!");
