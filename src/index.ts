@@ -1,6 +1,7 @@
 
 import express from "express";
 import equipmentRoutes from "./routes/equipmentRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -8,6 +9,7 @@ import { toNodeHandler } from "better-auth/node";
 import { connectDB } from "./config/db.js";
 import { auth } from "./lib/auth.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
+import { stripeWebhook } from "./controllers/paymentController.js";
 
 dotenv.config();
 
@@ -23,11 +25,18 @@ app.use(
 
 // BetterAuth route — must be before express.json()
 app.all("/api/auth/*splat", toNodeHandler(auth));
+// Stripe Webhook - must be before express.json()
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
 
 app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.get("/", (req, res) => {
   res.send("Equipment Rental Platform API is running!");
