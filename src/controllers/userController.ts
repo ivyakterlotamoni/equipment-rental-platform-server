@@ -1,5 +1,5 @@
-
 import type { RequestHandler } from "express";
+import { ObjectId } from "mongodb";
 import { db } from "../config/db.js";
 
 const userCollection = db.collection("user");
@@ -217,3 +217,165 @@ export const updateUserRole: RequestHandler = async (
     });
   }
 };
+
+const favoritesCollection = db.collection("favorites");
+const equipmentCollection = db.collection("equipment");
+
+// Get Customer Favorites
+export const getMyFavorites: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.sub;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+      return;
+    }
+
+    const favorites = await favoritesCollection
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    const equipmentIds = favorites
+      .map((item) => item.equipmentId)
+      .filter((id) => ObjectId.isValid(id))
+      .map((id) => new ObjectId(id));
+
+    const equipment = await equipmentCollection
+      .find({ _id: { $in: equipmentIds } })
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      message: "Favorites retrieved successfully",
+      data: equipment,
+    });
+  } catch (error) {
+    console.error("Get favorites error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve favorites",
+    });
+  }
+};
+
+// Add Equipment to Favorites
+export const addToFavorites: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.sub;
+    const { equipmentId } = req.body;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+      return;
+    }
+
+    if (!equipmentId || !ObjectId.isValid(equipmentId)) {
+      res.status(400).json({
+        success: false,
+        message: "Valid equipment ID is required",
+      });
+      return;
+    }
+
+    const equipment = await equipmentCollection.findOne({
+      _id: new ObjectId(equipmentId),
+      status: "approved",
+    });
+
+    if (!equipment) {
+      res.status(404).json({
+        success: false,
+        message: "Approved equipment not found",
+      });
+      return;
+    }
+
+    const existingFavorite = await favoritesCollection.findOne({
+      userId,
+      equipmentId,
+    });
+
+    if (existingFavorite) {
+      res.status(200).json({
+        success: true,
+        message: "Equipment is already in favorites",
+      });
+      return;
+    }
+
+    await favoritesCollection.insertOne({
+      userId,
+      equipmentId,
+      createdAt: new Date(),
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Equipment added to favorites",
+    });
+  } catch (error) {
+    console.error("Add favorite error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add favorite",
+    });
+  }
+};
+
+// Remove Equipment from Favorites
+export const removeFromFavorites: RequestHandler = async (req, res) => {
+  try {
+    const userId = req.user?.sub;
+    const equipmentId = Array.isArray(req.params.equipmentId)
+  ? req.params.equipmentId[0]
+  : req.params.equipmentId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+      return;
+    }
+
+    if (!ObjectId.isValid(equipmentId)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid equipment ID",
+      });
+      return;
+    }
+
+    const result = await favoritesCollection.deleteOne({
+      userId,
+      equipmentId,
+    });
+
+    if (result.deletedCount === 0) {
+      res.status(404).json({
+        success: false,
+        message: "Favorite not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Favorite removed successfully",
+    });
+  } catch (error) {
+    console.error("Remove favorite error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to remove favorite",
+    });
+  }
+};
+

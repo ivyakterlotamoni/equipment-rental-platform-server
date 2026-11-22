@@ -66,6 +66,7 @@ export const verifyToken: RequestHandler = async (
 // Check user role
 const allowRoles = (...roles: string[]): RequestHandler => {
   return (req, res, next) => {
+    console.log("ROLE CHECK:", req.user?.role, "ALLOWED:", roles);
     if (!req.user) {
       res.status(401).json({
         success: false,
