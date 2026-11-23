@@ -2,6 +2,7 @@
 
 
 import express from "express";
+import adminRoutes from "./routes/adminRoutes.js";
 import equipmentRoutes from "./routes/equipmentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -53,6 +54,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.send("Equipment Rental Platform API is running!");
