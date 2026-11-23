@@ -1,3 +1,4 @@
+
 import { jwt } from "better-auth/plugins";
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
@@ -15,7 +16,9 @@ export const auth = betterAuth({
   }),
 
   trustedOrigins: [
-    process.env.CLIENT_URL || "http://localhost:3000",
+    "http://localhost:3000",
+    "https://equipment-rental-platform-client-three.vercel.app",
+    ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
   ],
 
   emailAndPassword: {
@@ -44,5 +47,6 @@ export const auth = betterAuth({
           },
         }
       : undefined,
-      plugins: [jwt()],
+
+  plugins: [jwt()],
 });

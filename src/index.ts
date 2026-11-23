@@ -1,4 +1,6 @@
 
+
+
 import express from "express";
 import equipmentRoutes from "./routes/equipmentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
@@ -16,16 +18,29 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://equipment-rental-platform-client-three.vercel.app",
+  process.env.CLIENT_URL,
+].filter((origin): origin is string => Boolean(origin));
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
 // BetterAuth route — must be before express.json()
 app.all("/api/auth/*splat", toNodeHandler(auth));
-// Stripe Webhook - must be before express.json()
+
+// Stripe Webhook — must be before express.json()
 app.post(
   "/api/payments/webhook",
   express.raw({ type: "application/json" }),
@@ -33,6 +48,7 @@ app.post(
 );
 
 app.use(express.json());
+
 app.use("/api/users", userRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/bookings", bookingRoutes);
